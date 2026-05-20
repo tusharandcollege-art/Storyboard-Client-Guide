@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentary VFX Storyboard & Client Checklist</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --primary: #c9a054;
+            --primary-dark: #b0873a;
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --text-light: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --border: #333333;
+            --success: #2e7d32;
+            --warning: #ef6c00;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f5f7;
+            color: #333333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Screen Styles */
+        .page {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #ffffff;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        .cover-page {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 800px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 80px 60px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            border-left: 8px solid var(--primary);
+        }
+
+        .cover-top h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+
+        .cover-top h1 span {
+            color: var(--primary);
+        }
+
+        .cover-top p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            font-weight: 300;
+            max-width: 600px;
+        }
+
+        .cover-bottom {
+            border-top: 1px solid var(--border);
+            padding-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .meta-item {
+            margin-bottom: 10px;
+        }
+
+        .meta-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #111;
+            margin-top: 40px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title span {
+            font-size: 1rem;
+            background: #f0f0f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: #4a4a4a;
+        }
+
+        /* Scene Blocks */
+        .scene-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 35px;
+            background: #fafafa;
+            page-break-inside: avoid;
+        }
+
+        .scene-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .scene-title-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .scene-timecode {
+            font-size: 0.95rem;
+            background: #111;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: 700;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .scene-info ul {
+            list-style: none;
+            margin-bottom: 15px;
+        }
+
+        .scene-info li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            color: #444;
+        }
+
+        .scene-info li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary-dark);
+            font-size: 1.4rem;
+            line-height: 1;
+            top: -2px;
+        }
+
+        .badge-pending {
+            background-color: #fff3e0;
+            border: 1px solid #ffe0b2;
+            color: #e65100;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .scene-image-container {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 240px;
+            position: relative;
+        }
+
+        .scene-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-placeholder {
+            padding: 20px;
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            color: #111;
+        }
+
+        /* Questionnaire & Checklist Style */
+        .meeting-box {
+            background: #fff8e1;
+            border-left: 5px solid #ffb300;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 30px;
+        }
+
+        .meeting-box h3 {
+            color: #b78103;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox-mock {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #888;
+            border-radius: 4px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checklist-text strong {
+            color: #111;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .checklist-text p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Print Specifics */
+        @media print {
+            body {
+                background: none;
+                color: #000;
+                font-size: 11pt;
+                padding: 0;
+            }
+            .page {
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                max-width: 100%;
+            }
+            .cover-page {
+                height: 98vh;
+                page-break-after: always;
+                border-radius: 0;
+                padding: 50px;
+            }
+            .scene-card {
+                page-break-inside: avoid;
+                border: 1px solid #ccc;
+                background: #fff;
+            }
+            .section-break {
+                page-break-before: always;
+            }
+            .no-print {
+                display: none;
+            }
+            .badge-pending {
+                background: #fff;
+                border: 1px solid #000;
+                color: #000;
+            }
+        }
+
+        /* Floating action bar for browser preview */
+        .print-btn-bar {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--bg-dark);
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+            align-items: center;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #333;
+            color: #ccc;
+        }
+
+        .btn-secondary:hover {
+            background: #444;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Print Buttons (hidden in print) -->
+    <div class="print-btn-bar no-print">
+        <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+        <span style="color: white; font-size: 0.85rem; font-weight: 300;">
+            Tip: Save as PDF in Chrome/Edge, enable "Background Graphics"
+        </span>
+    </div>
+
+    <!-- Page Wrapper -->
+    <div class="page">
+        
+        <!-- COVER PAGE -->
+        <div class="cover-page">
+            <div class="cover-top">
+                <div style="color: var(--primary); font-weight: 700; letter-spacing: 3px; font-size: 0.9rem; margin-bottom: 20px; text-transform: uppercase;">
+                    Production Document
+                </div>
+                <h1>Documentary Film<br><span>VFX Storyboard & Client Guide</span></h1>
+                <p>A comprehensive scene-by-scene breakdown, visual references, and post-production agenda for the upcoming director review meeting.</p>
+            </div>
+            
+            <div class="cover-bottom">
+                <div>
+                    <div class="meta-item">
+                        <div class="meta-label">Prepared For</div>
+                        <div class="meta-value">Kapil (Director)</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="meta-item" style="text-align: right;">
+                        <div class="meta-label">Project Status</div>
+                        <div class="meta-value" style="color: var(--primary);">Pre-Production</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="meta-item" style="text-align: right;">
+                        <div class="meta-label">Date</div>
+                        <div class="meta-value">May 21, 2026</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 1: OVERVIEW -->
+        <div class="section-break"></div>
+        <h2 class="section-title">Project Overview <span>Layout Timeline</span></h2>
+        <p>This layout outlines the key visual effects (VFX), archival reconstructions, and artificial intelligence sequences required to complete the 16-minute documentary film. The goal of the upcoming meeting is to review these sample styles, gather raw assets from the director, and align on timeline priorities.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 15%">Timecode</th>
+                    <th style="width: 35%">Sequence Name</th>
+                    <th style="width: 30%">Core Technique</th>
+                    <th style="width: 20%">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>01:18</strong></td>
+                    <td>Samar's Picture Sequence</td>
+                    <td>Ken Burns / Still Animation</td>
+                    <td><span style="color: var(--warning); font-weight: 600;">Needs Asset</span></td>
+                </tr>
+                <tr>
+                    <td><strong>01:25</strong></td>
+                    <td>Four Friends AI Backstory</td>
+                    <td>AI Face-Consistent Images</td>
+                    <td><span style="color: var(--warning); font-weight: 600;">Needs Asset</span></td>
+                </tr>
+                <tr>
+                    <td><strong>02:09</strong></td>
+                    <td>OTT Character Introduction</td>
+                    <td>Freeze-Frame VFX & Gritty Sketch</td>
+                    <td><span style="color: var(--success); font-weight: 600;">Sample Ready</span></td>
+                </tr>
+                <tr>
+                    <td><strong>05:15</strong></td>
+                    <td>Newspaper Archive Headline</td>
+                    <td>3D Prop Zoom & Typography</td>
+                    <td><span style="color: var(--success); font-weight: 600;">Sample Ready</span></td>
+                </tr>
+                <tr>
+                    <td><strong>09:40</strong></td>
+                    <td>Sculptor B-Roll</td>
+                    <td>Macro Cinematography B-Roll</td>
+                    <td><span style="color: var(--success); font-weight: 600;">Sample Ready</span></td>
+                </tr>
+                <tr>
+                    <td><strong>13:29</strong></td>
+                    <td>Water Reservoir Burst</td>
+                    <td>AI Video Simulation (3 Floors High)</td>
+                    <td><span style="color: var(--success); font-weight: 600;">Sample Ready</span></td>
+                </tr>
+                <tr>
+                    <td><strong>14:35</strong></td>
+                    <td>Chowk / Pandal Overlay</td>
+                    <td>Footage Compositing / Matte</td>
+                    <td><span style="color: var(--success); font-weight: 600;">Sample Ready</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- SECTION 2: SCENE BREAKDOWNS -->
+        <div class="section-break"></div>
+        <h2 class="section-title">Scene Details & Sample Visuals <span>Style Guide</span></h2>
+
+        <!-- Scene 1 -->
+        <div class="scene-card">
+            <div class="scene-header">
+                <span class="scene-title-text">1. Samar's Picture Sequence</span>
+                <span class="scene-timecode">⏱️ 01:18</span>
+            </div>
+            <div class="grid-2">
+                <div class="scene-info">
+                    <p><strong>Goal:</strong> Create a respectful motion/still memory sequence for the late fourth friend, Samar, whose video footage is completely missing.</p>
+                    <ul>
+                        <li>Animate single or multiple historical photographs.</li>
+                        <li>Apply professional dust/grain and subtle camera movements.</li>
+                        <li><strong>Ending screen:</strong> Fade to black with text <em>"Samar died in [Year]."</em></li>
+                    </ul>
+                    <div class="badge-pending">⚠️ Pending: Youth photo of Samar & confirmation of year.</div>
+                </div>
+                <div class="scene-image-container">
+                    <div class="image-placeholder">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 10px; opacity: 0.5;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <p>No Image Yet<br><span style="font-size: 0.8rem; color: #999;">Awaiting original picture from client to animate.</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scene 2 -->
+        <div class="scene-card">
+            <div class="scene-header">
+                <span class="scene-title-text">2. Four Friends Vintage Sequence</span>
+                <span class="scene-timecode">⏱️ 01:25</span>
+            </div>
+            <div class="grid-2">
+                <div class="scene-info">
+                    <p><strong>Goal:</strong> Establish the backstory of all four friends during their younger years in the 1970s.</p>
+                    <ul>
+                        <li>Generate stylized AI portraits of the four friends together using face references.</li>
+                        <li>Match period-specific Indian clothing (bell bottoms, oversized collars, classic kurtas).</li>
+                        <li>Convert to classic B&W film texture.</li>
+                    </ul>
+                    <div class="badge-pending">⚠️ Pending: High-quality face reference photos.</div>
+                </div>
+                <div class="scene-image-container">
+                    <img src="./img_four_friends.png" alt="Four Friends 1970s Vintage Sample">
+                </div>
+            </div>
+        </div>
+
+        <!-- Scene 3 -->
+        <div class="scene-card">
+            <div class="scene-header">
+                <span class="scene-title-text">3. OTT-Style Character Intro</span>
+                <span class="scene-timecode">⏱️ 02:09</span>
+            </div>
+            <div class="grid-2">
+                <div class="scene-info">
+                    <p><strong>Goal:</strong> Create a high-energy, stylized character intro matching premium streaming shows (e.g., <em>The Family Man</em>).</p>
+                    <ul>
+                        <li>Video freezes on actor's face in high motion.</li>
+                        <li>Background and character dynamically sketch out / paint over with graphic overlay.</li>
+                        <li>Industrial/gritty typography naming lower-third slides in.</li>
+                    </ul>
+                </div>
+                <div class="scene-image-container">
+                    <img src="./img_ott_intro.png" alt="OTT Style Character Intro Style">
+                </div>
+            </div>
+        </div>
+
+        <!-- Scene 4 -->
+        <div class="scene-card">
+            <div class="scene-header">
+                <span class="scene-title-text">4. Newspaper Headline Integration</span>
+                <span class="scene-timecode">⏱️ 05:15</span>
+            </div>
+            <div class="grid-2">
+                <div class="scene-info">
+                    <p><strong>Goal:</strong> Visual of hands physically opening a vintage 1970s Hindi newspaper to an archive story.</p>
+                    <ul>
+                        <li>Main Headline: <strong>"चर्च में माँ दुर्गा" (Goddess Durga in Church)</strong> must be perfectly crisp and easy to read.</li>
+                        <li>Reference photo shown cleanly in right column.</li>
+                        <li>Rest of columns and side text blurred out to keep viewer focus.</li>
+                    </ul>
+                </div>
+                <div class="scene-image-container">
+                    <img src="./img_newspaper.png" alt="Newspaper Hindi Headline Sample">
+                </div>
+            </div>
+        </div>
+
+        <!-- Scene 5 -->
+        <div class="scene-card">
+            <div class="scene-header">
+                <span class="scene-title-text">5. Sculptor Alok Sen B-Roll</span>
+                <span class="scene-timecode">⏱️ 09:40</span>
+            </div>
+            <div class="grid-2">
+                <div class="scene-info">
+                    <p><strong>Goal:</strong> Visually cover the segment discussing meeting Alok Sen (sculptor) in 1980.</p>
+                    <ul>
+                        <li>If a real photo of Alok Sen is found, we will use it with animations.</li>
+                        <li><strong>Fallback/B-Roll Plan:</strong> High-quality close-up macro shots focusing on hands modeling a clay Durga Puja idol.</li>
+                        <li>Deep shadows, soft workshop lighting, focusing on texture of clay.</li>
+                    </ul>
+                </div>
+                <div class="scene-image-container">
+                    <img src="./img_sculptor.png" alt="Durga Sculptor Hands Close-up Sample">
+                </div>
+            </div>
+        </div>
+
+        <!-- Scene 6 -->
+        <div class="scene-card">
+            <div class="scene-header">
+                <span class="scene-title-text">6. Underground Water Reservoir Burst</span>
+                <span class="scene-timecode">⏱️ 13:29 - 13:50</span>
+            </div>
+            <div class="grid-2">
+                <div class="scene-info">
+                    <p><strong>Goal:</strong> High-impact simulation of a pressure explosion causing water to shoot from a field.</p>
+                    <ul>
+                        <li>Water spout must reach <strong>3 floors high</strong>, visibly towering above background structures.</li>
+                        <li>AI video generation ensures hyper-realistic water spray, mud splash, and scale.</li>
+                        <li><strong>Timing:</strong> Burst happens at 13:29, settling by 13:50 to show the quiet field.</li>
+                    </ul>
+                </div>
+                <div class="scene-image-container">
+                    <img src="./img_water.png" alt="Water Geyser Burst Sample">
+                </div>
+            </div>
+        </div>
+
+        <!-- Scene 7 -->
+        <div class="scene-card">
+            <div class="scene-header">
+                <span class="scene-title-text">7. Chowk / Pandal Overlay</span>
+                <span class="scene-timecode">⏱️ 14:35</span>
+            </div>
+            <div class="grid-2">
+                <div class="scene-info">
+                    <p><strong>Goal:</strong> Overlay a historical festival pandal structure over the modern city square (chowk) footage.</p>
+                    <ul>
+                        <li>Pandal must look large, traditional, and festive.</li>
+                        <li><strong>Crowd Constraint:</strong> Ground level should look packed and dense with people, but no crowds standing on roofs/structures.</li>
+                        <li>Composites cleanly over parked fire tenders.</li>
+                    </ul>
+                </div>
+                <div class="scene-image-container">
+                    <img src="./img_pandal.png" alt="Durga Pandal Chowk Overlay Sample">
+                </div>
+            </div>
+        </div>
+
+
+        <!-- SECTION 3: QUESTIONNAIRE & CHECKLIST -->
+        <div class="section-break"></div>
+        <h2 class="section-title" style="color: #b78103; border-bottom: 2px solid #ffe082;">Client Questionnaire & Asset Request <span>Critical Meeting Agenda</span></h2>
+        
+        <div class="meeting-box">
+            <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Director Verification & Asset Checklist
+            </h3>
+            <p>Meeting me client se ye details verify karni hai aur in materials ko save karke hume handover karne ke liye kehna hai:</p>
+        </div>
+
+        <div class="checklist-item">
+            <div class="checkbox-mock"></div>
+            <div class="checklist-text">
+                <strong>1. Samar's Death Year (Scene ⏱️ 01:18)</strong>
+                <p>Samar ki death kis saal hui thi? Final line me likha jayega: <em>"Samar died in [Year]."</em> Ye saal exact confirm kar lijiye.</p>
+            </div>
+        </div>
+
+        <div class="checklist-item">
+            <div class="checkbox-mock"></div>
+            <div class="checklist-text">
+                <strong>2. Samar's Youth Photograph (Scene ⏱️ 01:18)</strong>
+                <p>Kya unke paas Samar ki jawani (youth) ki koi photograph hai? Agar physical photo hai toh mobile scan ya high-res scan provide karein.</p>
+            </div>
+        </div>
+
+        <div class="checklist-item">
+            <div class="checkbox-mock"></div>
+            <div class="checklist-text">
+                <strong>3. Four Friends Vintage Photos (Scene ⏱️ 01:25)</strong>
+                <p>Charon doston ki jawani ki alag-alag black & white photos chahiye. Inhi faces ko base reference banakar hum AI models train karenge taaki group photos historical/consistent lagein.</p>
+            </div>
+        </div>
+
+        <div class="checklist-item">
+            <div class="checkbox-mock"></div>
+            <div class="checklist-text">
+                <strong>4. OTT Intro Character Footage (Scene ⏱️ 02:09)</strong>
+                <p>Character introduction kis frame pe stop hoga? Aur characters ke names on-screen kis font/language me chahiye (English/Hindi)?</p>
+            </div>
+        </div>
+
+        <div class="checklist-item">
+            <div class="checkbox-mock"></div>
+            <div class="checklist-text">
+                <strong>5. Newspaper Reference Photo & Date (Scene ⏱️ 05:15)</strong>
+                <p>Newspaper headline ke right side me jo reference photo dikhani hai, kya wo unke paas ready hai? Aur newspaper ki headline kis archive date ke sath print karni hai (e.g. 15th October 1978)?</p>
+            </div>
+        </div>
+
+        <div class="checklist-item">
+            <div class="checkbox-mock"></div>
+            <div class="checklist-text">
+                <strong>6. Sculptor Alok Sen Picture (Scene ⏱️ 09:40)</strong>
+                <p>Kya Alok Sen ki koi authentic photo mili hai? Agar nahi mili, toh kya unhe hamari clay-sculpting hands close-up visual direction pasand aayi (B-Roll)?</p>
+            </div>
+        </div>
+
+        <div class="checklist-item">
+            <div class="checkbox-mock"></div>
+            <div class="checklist-text">
+                <strong>7. Chowk Original Footage (Scene ⏱️ 14:35)</strong>
+                <p>Chowk waala shot jisme fire tenders parked hain, wo exact raw camera clip hume capture karke/drive pe de de. Pandal uske perspective me match karke 3D track hoga.</p>
+            </div>
+        </div>
+
+        <div class="checklist-item">
+            <div class="checkbox-mock"></div>
+            <div class="checklist-text">
+                <strong>8. Project Deliverable Resolution & Timeline</strong>
+                <p>Final master export specifications kya hain? (e.g. 4K UltraHD, 1080p, aspect ratio 16:9 cinematic scope, or standard format)? Final project delivery kab tak target karni hai?</p>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
