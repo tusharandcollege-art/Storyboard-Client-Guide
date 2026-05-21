@@ -14,6 +14,69 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // =============================================
+// PREMIUM CLOUD SYNC STATUS INDICATOR
+// =============================================
+const statusIndicator = document.createElement('div');
+statusIndicator.id = 'sync-status';
+statusIndicator.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 18px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    font-family: 'Inter', sans-serif;
+`;
+statusIndicator.innerHTML = `<span>🟢 Connected to Cloud</span>`;
+document.body.appendChild(statusIndicator);
+
+function setSaving() {
+    statusIndicator.innerHTML = `<span>⏳ Saving changes...</span>`;
+    statusIndicator.style.background = "rgba(201, 160, 84, 0.95)"; // primary gold color
+    statusIndicator.style.boxShadow = "0 4px 20px rgba(201, 160, 84, 0.4)";
+}
+
+function setSaved() {
+    statusIndicator.innerHTML = `<span>✅ All changes saved</span>`;
+    statusIndicator.style.background = "rgba(46, 125, 50, 0.95)"; // green
+    statusIndicator.style.boxShadow = "0 4px 20px rgba(46, 125, 50, 0.4)";
+    setTimeout(() => {
+        statusIndicator.innerHTML = `<span>🟢 Connected to Cloud</span>`;
+        statusIndicator.style.background = "rgba(0, 0, 0, 0.8)";
+        statusIndicator.style.boxShadow = "0 4px 20px rgba(0,0,0,0.3)";
+    }, 2000);
+}
+
+function setError(msg) {
+    statusIndicator.innerHTML = `<span>❌ Save error: ${msg}</span>`;
+    statusIndicator.style.background = "rgba(192, 57, 43, 0.95)"; // red
+    statusIndicator.style.boxShadow = "0 4px 20px rgba(192, 57, 43, 0.4)";
+}
+
+// Debounce helper to prevent database spam and save seamlessly as typing
+function debounce(func, delay) {
+    let timeout;
+    const debounced = function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+    debounced.cancel = () => clearTimeout(timeout);
+    return debounced;
+}
+
+// =============================================
 // CLOUDINARY CONFIG
 // =============================================
 const CLOUDINARY_CLOUD_NAME = "dfcsckzrq";
@@ -26,6 +89,7 @@ async function uploadToCloudinary(file, statusEl) {
     formData.append("file", file);
     formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
     try {
+        setSaving();
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
             { method: "POST", body: formData }
@@ -37,16 +101,18 @@ async function uploadToCloudinary(file, statusEl) {
         const data = await response.json();
         statusEl.innerText = "✅ Done!";
         statusEl.style.color = "green";
+        setSaved();
         setTimeout(() => statusEl.innerText = "", 3000);
         return data.secure_url;
     } catch (error) {
         statusEl.innerText = `❌ ${error.message}`;
         statusEl.style.color = "red";
+        setError(error.message);
         return null;
     }
 }
 
-// Make an element inline-editable with auto-save on blur
+// Make an element inline-editable with real-time debounced saving
 function setupInlineText(el, collectionName, docId, field) {
     if (!el) return;
     el.contentEditable = "true";
@@ -59,17 +125,35 @@ function setupInlineText(el, collectionName, docId, field) {
         el.style.background = "#fffde7";
         el.style.boxShadow = "inset 0 0 0 2px #ffb300";
     });
-    el.addEventListener('blur', async () => {
-        el.style.background = "transparent";
-        el.style.boxShadow = "none";
+
+    const saveContent = async () => {
+        setSaving();
         try {
             await setDoc(doc(db, collectionName, docId), {
                 [field]: el.innerHTML,
                 timestamp: Date.now()
             }, { merge: true });
+            setSaved();
         } catch (e) {
             console.error("Save error:", e.message);
+            setError(e.message);
         }
+    };
+
+    // Save 1 second after user stops typing
+    const debouncedSave = debounce(saveContent, 1000);
+
+    el.addEventListener('input', () => {
+        setSaving();
+        debouncedSave();
+    });
+
+    el.addEventListener('blur', () => {
+        el.style.background = "transparent";
+        el.style.boxShadow = "none";
+        // Cancel pending debounce and save instantly on focus out
+        debouncedSave.cancel();
+        saveContent();
     });
 }
 
@@ -103,14 +187,26 @@ function setupImageControls(containerId, collectionName, docId) {
         const url = await uploadToCloudinary(file, statusEl);
         if (url) {
             imgContainer.innerHTML = buildImgTag(url);
-            await setDoc(doc(db, collectionName, docId), { imageUrl: url, timestamp: Date.now() }, { merge: true });
+            try {
+                setSaving();
+                await setDoc(doc(db, collectionName, docId), { imageUrl: url, timestamp: Date.now() }, { merge: true });
+                setSaved();
+            } catch (e) {
+                setError(e.message);
+            }
         }
     });
 
     document.getElementById(`btn-remove-${containerId}`).addEventListener('click', async () => {
         if (!confirm("Remove this image?")) return;
         imgContainer.innerHTML = emptyImagePlaceholder();
-        await setDoc(doc(db, collectionName, docId), { imageUrl: "", timestamp: Date.now() }, { merge: true });
+        try {
+            setSaving();
+            await setDoc(doc(db, collectionName, docId), { imageUrl: "", timestamp: Date.now() }, { merge: true });
+            setSaved();
+        } catch (e) {
+            setError(e.message);
+        }
     });
 }
 
@@ -143,7 +239,7 @@ document.querySelectorAll('.scene-card').forEach((card, index) => {
     onSnapshot(doc(db, "panels", sceneId), (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
-            // Only update text if user is not currently editing
+            // Only update text if user is not currently editing to avoid cursor jumping
             if (data.htmlContent && document.activeElement !== infoContainer) {
                 infoContainer.innerHTML = data.htmlContent;
             }
@@ -167,13 +263,16 @@ btnAddPanel.addEventListener('click', async () => {
     btnAddPanel.innerText = "Creating...";
     btnAddPanel.disabled = true;
     try {
+        setSaving();
         await addDoc(collection(db, "dynamic_panels"), {
             title: "New Panel — Click to edit title",
             htmlContent: "<p><strong>Goal:</strong> Click here and type your description...</p>",
             imageUrl: "",
             createdAt: Date.now()
         });
+        setSaved();
     } catch (e) {
+        setError(e.message);
         alert(`Error: ${e.message}`);
     } finally {
         btnAddPanel.innerText = original;
@@ -204,7 +303,7 @@ onSnapshot(q, (snapshot) => {
                 display:flex; align-items:center; justify-content:center;
                 z-index:10;">✕</button>
             <div class="scene-header">
-                <span id="title-${panelId}" class="scene-title-text">${data.title}</span>
+                <span id="title-${panelId}" class="scene-title-text" style="outline:none;">${data.title}</span>
                 <span class="scene-timecode">Custom</span>
             </div>
             <div class="grid-2">
@@ -226,7 +325,13 @@ onSnapshot(q, (snapshot) => {
         // Delete panel
         document.getElementById(`delete-${panelId}`).addEventListener('click', async () => {
             if (!confirm("Delete this panel permanently?")) return;
-            await deleteDoc(doc(db, "dynamic_panels", panelId));
+            try {
+                setSaving();
+                await deleteDoc(doc(db, "dynamic_panels", panelId));
+                setSaved();
+            } catch (e) {
+                setError(e.message);
+            }
         });
     });
 });
