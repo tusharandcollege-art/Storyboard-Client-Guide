@@ -214,14 +214,14 @@ document.querySelectorAll('.scene-card').forEach((card, index) => {
             commentEl.innerHTML = `
                 <div style="flex: 1; padding-right: 12px;">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
-                        <span style="font-weight: 700; font-size: 0.85rem; color: var(--primary);">${data.author}</span>
+                        <span style="font-weight: 700; font-size: 0.85rem; color: #111;">${data.author}</span>
                         <span style="font-size: 0.75rem; color: #888;">${formatTime(data.timestamp)}</span>
                     </div>
-                    <div style="font-size: 0.9rem; color: #e0e0e0; line-height: 1.5; word-break: break-word;">${data.text}</div>
+                    <div style="font-size: 0.9rem; color: #222; line-height: 1.5; word-break: break-word;">${data.text}</div>
                 </div>
                 <button id="delete-${sceneId}-${commentId}" title="Delete" style="
                     background: transparent;
-                    color: rgba(255,255,255,0.25);
+                    color: rgba(0,0,0,0.35);
                     border: none;
                     font-size: 1rem;
                     cursor: pointer;
@@ -235,8 +235,8 @@ document.querySelectorAll('.scene-card').forEach((card, index) => {
             commentsList.appendChild(commentEl);
 
             const deleteBtn = document.getElementById(`delete-${sceneId}-${commentId}`);
-            deleteBtn.addEventListener('mouseenter', () => deleteBtn.style.color = '#e74c3c');
-            deleteBtn.addEventListener('mouseleave', () => deleteBtn.style.color = 'rgba(255,255,255,0.25)');
+            deleteBtn.addEventListener('mouseenter', () => deleteBtn.style.color = '#c0392b');
+            deleteBtn.addEventListener('mouseleave', () => deleteBtn.style.color = 'rgba(0,0,0,0.35)');
             deleteBtn.addEventListener('click', async () => {
                 if (confirm("Delete this comment?")) {
                     await deleteDoc(doc(db, "scene_comments", sceneId, "comments", commentId));
