@@ -401,13 +401,6 @@
                 </div>
                 <h1>Documentary Film<br><span>VFX Storyboard & Client Guide</span></h1>
                 <p>A comprehensive scene-by-scene breakdown, visual references, and post-production agenda for the upcoming director review meeting.</p>
-                
-                <div id="identity-selector" style="margin-top: 30px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; display: inline-block;">
-                    <span style="color: #ccc; font-size: 0.9rem; margin-right: 15px;">I am editing as:</span>
-                    <button class="btn btn-secondary" id="btn-identity-owner" style="margin-right: 10px;">Owner (You)</button>
-                    <button class="btn btn-secondary" id="btn-identity-client">Client</button>
-                    <div id="current-identity-display" style="margin-top: 10px; font-weight: bold; color: var(--primary);">Currently Viewing Only (Select an identity to edit)</div>
-                </div>
             </div>
             
             <div class="cover-bottom">
@@ -652,6 +645,12 @@
             </div>
         </div>
 
+
+        <div id="dynamic-panels-container"></div>
+
+        <div style="text-align: center; margin: 40px 0;">
+            <button class="btn" id="btn-add-panel" style="font-size: 1.2rem; padding: 15px 40px; box-shadow: 0 4px 15px rgba(201, 160, 84, 0.4);">+ Add New Panel</button>
+        </div>
 
         <!-- SECTION 3: QUESTIONNAIRE & CHECKLIST -->
         <div class="section-break"></div>
