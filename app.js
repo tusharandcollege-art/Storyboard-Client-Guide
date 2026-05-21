@@ -110,13 +110,13 @@ document.querySelectorAll('.scene-card').forEach((card, index) => {
         </div>
 
         <!-- Add comment form -->
-        <div class="no-print" style="display: flex; flex-direction: column; gap: 8px; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 12px; border: 1px solid rgba(255,255,255,0.06);">
+        <div class="no-print" style="display: flex; flex-direction: column; gap: 8px; background: rgba(255,255,255,0.07); border-radius: 8px; padding: 12px; border: 1px solid rgba(255,255,255,0.1);">
             <input type="text" id="commenter-name-${sceneId}" placeholder="Your Name (e.g. Director, Client)" style="
                 padding: 8px 12px;
-                background: #1e1e1e;
-                border: 1px solid rgba(255,255,255,0.15);
+                background: #ffffff;
+                border: 1px solid #ccc;
                 border-radius: 6px;
-                color: #eee;
+                color: #222;
                 font-size: 0.85rem;
                 outline: none;
                 width: 100%;
@@ -126,10 +126,10 @@ document.querySelectorAll('.scene-card').forEach((card, index) => {
                 <input type="text" id="comment-text-${sceneId}" placeholder="Add a note or request changes..." style="
                     flex: 4;
                     padding: 8px 12px;
-                    background: #1e1e1e;
-                    border: 1px solid rgba(255,255,255,0.15);
+                    background: #ffffff;
+                    border: 1px solid #ccc;
                     border-radius: 6px;
-                    color: #eee;
+                    color: #222;
                     font-size: 0.85rem;
                     outline: none;
                 ">
