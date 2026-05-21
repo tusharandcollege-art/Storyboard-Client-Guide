@@ -50,18 +50,12 @@ if (globalNotesBox && notesSyncStatus) {
     });
 
     const saveNotes = async () => {
-        notesSyncStatus.innerHTML = `<span>⏳ Saving...</span>`;
-        notesSyncStatus.style.color = "var(--primary, #c9a054)";
         try {
             await setDoc(doc(db, "meeting", "notes"), {
                 text: globalNotesBox.value,
                 timestamp: Date.now()
             }, { merge: true });
-            notesSyncStatus.innerHTML = `<span>🟢 Synced with Cloud</span>`;
-            notesSyncStatus.style.color = "#888";
         } catch (e) {
-            notesSyncStatus.innerHTML = `<span>❌ Save Error</span>`;
-            notesSyncStatus.style.color = "red";
             console.error("Notes save error:", e);
         }
     };
@@ -69,8 +63,6 @@ if (globalNotesBox && notesSyncStatus) {
     const debouncedSaveNotes = debounce(saveNotes, 1000);
 
     globalNotesBox.addEventListener('input', () => {
-        notesSyncStatus.innerHTML = `<span>⏳ Saving...</span>`;
-        notesSyncStatus.style.color = "var(--primary, #c9a054)";
         debouncedSaveNotes();
     });
 
