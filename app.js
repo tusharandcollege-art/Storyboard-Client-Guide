@@ -16,7 +16,7 @@ const db = getFirestore(app);
 // =============================================
 // CLOUDINARY CONFIG
 // =============================================
-const CLOUDINARY_CLOUD_NAME = "ht";
+const CLOUDINARY_CLOUD_NAME = "dfcsckzrq";
 const CLOUDINARY_UPLOAD_PRESET = "storyboard_abc";
 
 // Upload image to Cloudinary (unsigned - safe for browser)
