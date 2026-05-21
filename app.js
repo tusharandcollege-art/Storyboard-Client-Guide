@@ -35,9 +35,10 @@ function formatTime(timestamp) {
 // 1. COLLABORATIVE MEETING NOTES
 // =============================================================
 const globalNotesBox = document.getElementById('global-notes-box');
-const notesSyncStatus = document.getElementById('notes-sync-status');
+const btnSaveNotes = document.getElementById('btn-save-notes');
+const notesSaveStatus = document.getElementById('notes-save-status');
 
-if (globalNotesBox && notesSyncStatus) {
+if (globalNotesBox) {
     // Listen to real-time changes of global notes in Firestore
     onSnapshot(doc(db, "meeting", "notes"), (docSnap) => {
         if (docSnap.exists()) {
@@ -49,26 +50,43 @@ if (globalNotesBox && notesSyncStatus) {
         }
     });
 
-    const saveNotes = async () => {
+    const saveNotes = async (isManual = false) => {
+        if (notesSaveStatus) {
+            notesSaveStatus.innerHTML = `⏳ Saving...`;
+            notesSaveStatus.style.color = "var(--primary, #c9a054)";
+            notesSaveStatus.style.opacity = "1";
+        }
+        
         try {
             await setDoc(doc(db, "meeting", "notes"), {
                 text: globalNotesBox.value,
                 timestamp: Date.now()
             }, { merge: true });
+            
+            if (notesSaveStatus) {
+                notesSaveStatus.innerHTML = `✅ Saved successfully!`;
+                notesSaveStatus.style.color = "#2e7d32";
+                setTimeout(() => {
+                    notesSaveStatus.style.opacity = "0";
+                }, 3000);
+            }
         } catch (e) {
+            if (notesSaveStatus) {
+                notesSaveStatus.innerHTML = `❌ Error: ${e.message}`;
+                notesSaveStatus.style.color = "#c0392b";
+            }
             console.error("Notes save error:", e);
         }
     };
 
-    const debouncedSaveNotes = debounce(saveNotes, 1000);
+    // Save manually on button click
+    if (btnSaveNotes) {
+        btnSaveNotes.addEventListener('click', () => saveNotes(true));
+    }
 
-    globalNotesBox.addEventListener('input', () => {
-        debouncedSaveNotes();
-    });
-
+    // Auto-save on blur (focus out) as a backup
     globalNotesBox.addEventListener('blur', () => {
-        debouncedSaveNotes.cancel();
-        saveNotes();
+        saveNotes(false);
     });
     
     // Focus effect
