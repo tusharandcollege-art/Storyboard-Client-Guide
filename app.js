@@ -118,7 +118,7 @@ document.querySelectorAll('.scene-card').forEach((card, index) => {
         <!-- Add comment form -->
         <div class="no-print" style="display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; padding: 12px;">
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="commenter-name-${sceneId}" placeholder="Your Name (e.g. Director, Client, Tushar)" style="
+                <input type="text" id="commenter-name-${sceneId}" placeholder="Your Name (e.g. Director, Client)" style="
                     flex: 1;
                     padding: 8px 12px;
                     background: rgba(0,0,0,0.3);
