@@ -13,59 +13,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// =============================================
-// PREMIUM CLOUD SYNC STATUS INDICATOR
-// =============================================
-const statusIndicator = document.createElement('div');
-statusIndicator.id = 'sync-status';
-statusIndicator.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 10px 18px;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    color: #fff;
-    border-radius: 30px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
-    transition: all 0.3s ease;
-    pointer-events: none;
-    font-family: 'Inter', sans-serif;
-`;
-statusIndicator.innerHTML = `<span>🟢 Connected to Cloud</span>`;
-document.body.appendChild(statusIndicator);
-
-function setSaving() {
-    statusIndicator.innerHTML = `<span>⏳ Saving changes...</span>`;
-    statusIndicator.style.background = "rgba(201, 160, 84, 0.95)"; // primary gold color
-    statusIndicator.style.boxShadow = "0 4px 20px rgba(201, 160, 84, 0.4)";
-}
-
-function setSaved() {
-    statusIndicator.innerHTML = `<span>✅ All changes saved</span>`;
-    statusIndicator.style.background = "rgba(46, 125, 50, 0.95)"; // green
-    statusIndicator.style.boxShadow = "0 4px 20px rgba(46, 125, 50, 0.4)";
-    setTimeout(() => {
-        statusIndicator.innerHTML = `<span>🟢 Connected to Cloud</span>`;
-        statusIndicator.style.background = "rgba(0, 0, 0, 0.8)";
-        statusIndicator.style.boxShadow = "0 4px 20px rgba(0,0,0,0.3)";
-    }, 2000);
-}
-
-function setError(msg) {
-    statusIndicator.innerHTML = `<span>❌ Save error: ${msg}</span>`;
-    statusIndicator.style.background = "rgba(192, 57, 43, 0.95)"; // red
-    statusIndicator.style.boxShadow = "0 4px 20px rgba(192, 57, 43, 0.4)";
-}
-
-// Debounce helper to prevent database spam and save seamlessly as typing
+// Helper for debouncing auto-saves
 function debounce(func, delay) {
     let timeout;
     const debounced = function (...args) {
@@ -76,262 +24,243 @@ function debounce(func, delay) {
     return debounced;
 }
 
-// =============================================
-// CLOUDINARY CONFIG
-// =============================================
-const CLOUDINARY_CLOUD_NAME = "dfcsckzrq";
-const CLOUDINARY_UPLOAD_PRESET = "storyboard_abc";
-
-async function uploadToCloudinary(file, statusEl) {
-    statusEl.innerText = "⏳ Uploading...";
-    statusEl.style.color = "#c9a054";
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-    try {
-        setSaving();
-        const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-            { method: "POST", body: formData }
-        );
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || "Upload failed");
-        }
-        const data = await response.json();
-        statusEl.innerText = "✅ Done!";
-        statusEl.style.color = "green";
-        setSaved();
-        setTimeout(() => statusEl.innerText = "", 3000);
-        return data.secure_url;
-    } catch (error) {
-        statusEl.innerText = `❌ ${error.message}`;
-        statusEl.style.color = "red";
-        setError(error.message);
-        return null;
-    }
+// Helper to format timestamps nicely
+function formatTime(timestamp) {
+    if (!timestamp) return "Just now";
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' - ' + date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-// Make an element inline-editable with real-time debounced saving
-function setupInlineText(el, collectionName, docId, field) {
-    if (!el) return;
-    el.contentEditable = "true";
-    el.style.outline = "none";
-    el.style.borderRadius = "8px";
-    el.style.transition = "background 0.2s, box-shadow 0.2s";
-    el.title = "✏️ Click to edit";
+// =============================================================
+// 1. COLLABORATIVE MEETING NOTES
+// =============================================================
+const globalNotesBox = document.getElementById('global-notes-box');
+const notesSyncStatus = document.getElementById('notes-sync-status');
 
-    el.addEventListener('focus', () => {
-        el.style.background = "#fffde7";
-        el.style.boxShadow = "inset 0 0 0 2px #ffb300";
+if (globalNotesBox && notesSyncStatus) {
+    // Listen to real-time changes of global notes in Firestore
+    onSnapshot(doc(db, "meeting", "notes"), (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Only update textarea content if the user isn't currently focused and typing
+            if (data.text !== undefined && document.activeElement !== globalNotesBox) {
+                globalNotesBox.value = data.text;
+            }
+        }
     });
 
-    const saveContent = async () => {
-        setSaving();
+    const saveNotes = async () => {
+        notesSyncStatus.innerHTML = `<span>⏳ Saving...</span>`;
+        notesSyncStatus.style.color = "var(--primary, #c9a054)";
         try {
-            await setDoc(doc(db, collectionName, docId), {
-                [field]: el.innerHTML,
+            await setDoc(doc(db, "meeting", "notes"), {
+                text: globalNotesBox.value,
                 timestamp: Date.now()
             }, { merge: true });
-            setSaved();
+            notesSyncStatus.innerHTML = `<span>🟢 Synced with Cloud</span>`;
+            notesSyncStatus.style.color = "#888";
         } catch (e) {
-            console.error("Save error:", e.message);
-            setError(e.message);
+            notesSyncStatus.innerHTML = `<span>❌ Save Error</span>`;
+            notesSyncStatus.style.color = "red";
+            console.error("Notes save error:", e);
         }
     };
 
-    // Save 1 second after user stops typing
-    const debouncedSave = debounce(saveContent, 1000);
+    const debouncedSaveNotes = debounce(saveNotes, 1000);
 
-    el.addEventListener('input', () => {
-        setSaving();
-        debouncedSave();
+    globalNotesBox.addEventListener('input', () => {
+        notesSyncStatus.innerHTML = `<span>⏳ Saving...</span>`;
+        notesSyncStatus.style.color = "var(--primary, #c9a054)";
+        debouncedSaveNotes();
     });
 
-    el.addEventListener('blur', () => {
-        el.style.background = "transparent";
-        el.style.boxShadow = "none";
-        // Cancel pending debounce and save instantly on focus out
-        debouncedSave.cancel();
-        saveContent();
+    globalNotesBox.addEventListener('blur', () => {
+        debouncedSaveNotes.cancel();
+        saveNotes();
     });
-}
-
-// Build image controls (Change Image + Remove Image)
-function buildImageControls(containerId, collectionName, docId) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'no-print';
-    wrapper.style.cssText = 'margin-top:15px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;';
-
-    const fileInputId = `file-${containerId}`;
-    wrapper.innerHTML = `
-        <button class="btn btn-secondary" id="btn-change-${containerId}" style="font-size:0.8rem;padding:6px 14px;">🖼️ Change Image</button>
-        <button class="btn btn-secondary" id="btn-remove-${containerId}" style="font-size:0.8rem;padding:6px 14px;background:#c0392b;border-color:#c0392b;color:#fff;">✕ Remove Image</button>
-        <span id="status-${containerId}" style="font-size:0.85rem;"></span>
-        <input type="file" id="${fileInputId}" accept="image/*" style="display:none;">
-    `;
-    return wrapper;
-}
-
-// Wire up image controls after inserting into DOM
-function setupImageControls(containerId, collectionName, docId) {
-    const imgContainer = document.getElementById(containerId);
-    const statusEl = document.getElementById(`status-${containerId}`);
-    const fileInput = document.getElementById(`file-${containerId}`);
-
-    document.getElementById(`btn-change-${containerId}`).addEventListener('click', () => fileInput.click());
-
-    fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const url = await uploadToCloudinary(file, statusEl);
-        if (url) {
-            imgContainer.innerHTML = buildImgTag(url);
-            try {
-                setSaving();
-                await setDoc(doc(db, collectionName, docId), { imageUrl: url, timestamp: Date.now() }, { merge: true });
-                setSaved();
-            } catch (e) {
-                setError(e.message);
-            }
-        }
+    
+    // Focus effect
+    globalNotesBox.addEventListener('focus', () => {
+        globalNotesBox.style.borderColor = "var(--primary)";
+        globalNotesBox.style.boxShadow = "0 0 10px rgba(201,160,84,0.15)";
     });
-
-    document.getElementById(`btn-remove-${containerId}`).addEventListener('click', async () => {
-        if (!confirm("Remove this image?")) return;
-        imgContainer.innerHTML = emptyImagePlaceholder();
-        try {
-            setSaving();
-            await setDoc(doc(db, collectionName, docId), { imageUrl: "", timestamp: Date.now() }, { merge: true });
-            setSaved();
-        } catch (e) {
-            setError(e.message);
-        }
+    globalNotesBox.addEventListener('blur', () => {
+        globalNotesBox.style.borderColor = "rgba(255,255,255,0.1)";
+        globalNotesBox.style.boxShadow = "none";
     });
-}
-
-function buildImgTag(url) {
-    return `<img src="${url}" alt="Panel Image" style="width:100%;height:100%;object-fit:cover;">`;
-}
-
-function emptyImagePlaceholder() {
-    return `<div class="image-placeholder" style="text-align:center;padding:20px;color:#888;"><p>No Image<br><span style="font-size:0.8rem;color:#bbb;">Click 'Change Image' below</span></p></div>`;
 }
 
 // =============================================================
-// 1. STATIC SCENES (Scene 1–7)
+// 2. PANEL COMMENTS SYSTEM
 // =============================================================
 document.querySelectorAll('.scene-card').forEach((card, index) => {
     const sceneId = `scene_${index + 1}`;
-    const infoContainer = card.querySelector('.scene-info');
-    const imageContainer = card.querySelector('.scene-image-container');
-    imageContainer.id = `img-${sceneId}`;
-
-    // Inline editable text
-    setupInlineText(infoContainer, "panels", sceneId, "htmlContent");
-
-    // Image controls
-    const controls = buildImageControls(`img-${sceneId}`, "panels", sceneId);
-    card.appendChild(controls);
-    setupImageControls(`img-${sceneId}`, "panels", sceneId);
-
-    // Load saved data from Firestore (persists on refresh)
-    onSnapshot(doc(db, "panels", sceneId), (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Only update text if user is not currently editing to avoid cursor jumping
-            if (data.htmlContent && document.activeElement !== infoContainer) {
-                infoContainer.innerHTML = data.htmlContent;
-            }
-            if (data.imageUrl) {
-                imageContainer.innerHTML = buildImgTag(data.imageUrl);
-            } else if (data.imageUrl === "") {
-                imageContainer.innerHTML = emptyImagePlaceholder();
-            }
-        }
-    });
-});
-
-// =============================================================
-// 2. DYNAMIC PANELS — Add New Panel + Delete + Remove Image
-// =============================================================
-const dynamicContainer = document.getElementById('dynamic-panels-container');
-const btnAddPanel = document.getElementById('btn-add-panel');
-
-btnAddPanel.addEventListener('click', async () => {
-    const original = btnAddPanel.innerText;
-    btnAddPanel.innerText = "Creating...";
-    btnAddPanel.disabled = true;
-    try {
-        setSaving();
-        await addDoc(collection(db, "dynamic_panels"), {
-            title: "New Panel — Click to edit title",
-            htmlContent: "<p><strong>Goal:</strong> Click here and type your description...</p>",
-            imageUrl: "",
-            createdAt: Date.now()
-        });
-        setSaved();
-    } catch (e) {
-        setError(e.message);
-        alert(`Error: ${e.message}`);
-    } finally {
-        btnAddPanel.innerText = original;
-        btnAddPanel.disabled = false;
+    
+    // Inject clean Comments Section UI at the bottom of each scene card
+    const commentsDiv = document.createElement('div');
+    commentsDiv.style.cssText = `
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        font-family: 'Inter', sans-serif;
+    `;
+    
+    commentsDiv.innerHTML = `
+        <h4 style="margin: 0 0 15px 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary);">
+            💬 Comments & Feedback
+        </h4>
+        
+        <!-- List of comments -->
+        <div id="comments-list-${sceneId}" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
+            <div style="font-size: 0.85rem; color: #888; font-style: italic;">No feedback left yet. Be the first to comment below!</div>
+        </div>
+        
+        <!-- Add comment form -->
+        <div class="no-print" style="display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; padding: 12px;">
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="commenter-name-${sceneId}" placeholder="Your Name (e.g. Director, Client, Tushar)" style="
+                    flex: 1;
+                    padding: 8px 12px;
+                    background: rgba(0,0,0,0.3);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 6px;
+                    color: #fff;
+                    font-size: 0.85rem;
+                    outline: none;
+                ">
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="comment-text-${sceneId}" placeholder="Add a note or request changes..." style="
+                    flex: 4;
+                    padding: 8px 12px;
+                    background: rgba(0,0,0,0.3);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 6px;
+                    color: #fff;
+                    font-size: 0.85rem;
+                    outline: none;
+                ">
+                <button id="btn-post-comment-${sceneId}" class="btn" style="
+                    flex: 1;
+                    padding: 8px 15px;
+                    font-size: 0.85rem;
+                    text-transform: uppercase;
+                    border-radius: 6px;
+                ">Post</button>
+            </div>
+        </div>
+    `;
+    
+    card.appendChild(commentsDiv);
+    
+    const commentsList = document.getElementById(`comments-list-${sceneId}`);
+    const nameInput = document.getElementById(`commenter-name-${sceneId}`);
+    const textInput = document.getElementById(`comment-text-${sceneId}`);
+    const postBtn = document.getElementById(`btn-post-comment-${sceneId}`);
+    
+    // Autofill name from localStorage for better experience
+    if (localStorage.getItem('commenter_name')) {
+        nameInput.value = localStorage.getItem('commenter_name');
     }
-});
-
-// Render dynamic panels in real-time
-const q = query(collection(db, "dynamic_panels"), orderBy("createdAt", "asc"));
-onSnapshot(q, (snapshot) => {
-    dynamicContainer.innerHTML = "";
-    snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const panelId = docSnap.id;
-        const imgContainerId = `img-dyn-${panelId}`;
-
-        const imageHtml = data.imageUrl ? buildImgTag(data.imageUrl) : emptyImagePlaceholder();
-
-        const card = document.createElement('div');
-        card.className = "scene-card";
-        card.style.position = "relative";
-        card.innerHTML = `
-            <button id="delete-${panelId}" title="Delete this panel" style="
-                position:absolute; top:12px; right:12px;
-                background:#c0392b; color:#fff; border:none;
-                border-radius:50%; width:28px; height:28px;
-                font-size:1rem; cursor:pointer; line-height:1;
-                display:flex; align-items:center; justify-content:center;
-                z-index:10;">✕</button>
-            <div class="scene-header">
-                <span id="title-${panelId}" class="scene-title-text" style="outline:none;">${data.title}</span>
-                <span class="scene-timecode">Custom</span>
-            </div>
-            <div class="grid-2">
-                <div class="scene-info" id="info-${panelId}">${data.htmlContent}</div>
-                <div class="scene-image-container" id="${imgContainerId}">${imageHtml}</div>
-            </div>
-        `;
-        dynamicContainer.appendChild(card);
-
-        // Append image controls
-        const controls = buildImageControls(imgContainerId, "dynamic_panels", panelId);
-        card.appendChild(controls);
-        setupImageControls(imgContainerId, "dynamic_panels", panelId);
-
-        // Inline editable title & text
-        setupInlineText(document.getElementById(`title-${panelId}`), "dynamic_panels", panelId, "title");
-        setupInlineText(document.getElementById(`info-${panelId}`), "dynamic_panels", panelId, "htmlContent");
-
-        // Delete panel
-        document.getElementById(`delete-${panelId}`).addEventListener('click', async () => {
-            if (!confirm("Delete this panel permanently?")) return;
-            try {
-                setSaving();
-                await deleteDoc(doc(db, "dynamic_panels", panelId));
-                setSaved();
-            } catch (e) {
-                setError(e.message);
-            }
+    
+    // Save new comment
+    const submitComment = async () => {
+        const name = nameInput.value.trim() || "Collaborator";
+        const text = textInput.value.trim();
+        
+        if (!text) return;
+        
+        // Remember commenter name
+        localStorage.setItem('commenter_name', name);
+        
+        // Visual loading state
+        postBtn.disabled = true;
+        postBtn.innerText = "...";
+        
+        try {
+            await addDoc(collection(db, "scene_comments", sceneId, "comments"), {
+                author: name,
+                text: text,
+                timestamp: Date.now()
+            });
+            textInput.value = "";
+        } catch (e) {
+            console.error("Error adding comment:", e);
+            alert("Could not post comment. Check connection or Firestore Rules.");
+        } finally {
+            postBtn.disabled = false;
+            postBtn.innerText = "Post";
+        }
+    };
+    
+    postBtn.addEventListener('click', submitComment);
+    textInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') submitComment();
+    });
+    
+    // Listen for comments in real-time
+    const qComments = query(collection(db, "scene_comments", sceneId, "comments"), orderBy("timestamp", "asc"));
+    onSnapshot(qComments, (snapshot) => {
+        commentsList.innerHTML = "";
+        
+        if (snapshot.empty) {
+            commentsList.innerHTML = `<div style="font-size: 0.85rem; color: #888; font-style: italic;">No feedback left yet. Be the first to comment below!</div>`;
+            return;
+        }
+        
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const commentId = docSnap.id;
+            
+            const commentEl = document.createElement('div');
+            commentEl.style.cssText = `
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                background: rgba(255, 255, 255, 0.03);
+                border-left: 3px solid var(--primary);
+                border-radius: 4px;
+                padding: 10px 12px;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            commentEl.innerHTML = `
+                <div style="flex: 1; padding-right: 15px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <span style="font-weight: 600; font-size: 0.85rem; color: #fff;">${data.author}</span>
+                        <span style="font-size: 0.75rem; color: #666;">${formatTime(data.timestamp)}</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #ddd; line-height: 1.4; word-break: break-word;">${data.text}</div>
+                </div>
+                <button id="delete-comment-${sceneId}-${commentId}" class="no-print" title="Delete Comment" style="
+                    background: transparent;
+                    color: rgba(255,255,255,0.3);
+                    border: none;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    padding: 2px 6px;
+                    transition: color 0.2s;
+                ">✕</button>
+            `;
+            
+            commentsList.appendChild(commentEl);
+            
+            // Wire up comment deletion
+            const deleteBtn = document.getElementById(`delete-comment-${sceneId}-${commentId}`);
+            deleteBtn.addEventListener('mouseenter', () => deleteBtn.style.color = '#e74c3c');
+            deleteBtn.addEventListener('mouseleave', () => deleteBtn.style.color = 'rgba(255,255,255,0.3)');
+            deleteBtn.addEventListener('click', async () => {
+                if (confirm("Delete this comment permanently?")) {
+                    try {
+                        await deleteDoc(doc(db, "scene_comments", sceneId, "comments", commentId));
+                    } catch (e) {
+                        alert("Could not delete comment. Check credentials.");
+                    }
+                }
+            });
         });
+        
+        // Auto scroll to bottom of comments
+        commentsList.scrollTop = commentsList.scrollHeight;
     });
 });
