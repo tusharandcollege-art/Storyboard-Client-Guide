@@ -17,7 +17,7 @@ const db = getFirestore(app);
 // CLOUDINARY CONFIG
 // =============================================
 const CLOUDINARY_CLOUD_NAME = "ht";
-const CLOUDINARY_UPLOAD_PRESET = "REPLACE_WITH_YOUR_PRESET"; // <-- User: paste your unsigned preset name here
+const CLOUDINARY_UPLOAD_PRESET = "Preset name";
 
 // Upload image to Cloudinary (unsigned - safe for browser)
 async function uploadToCloudinary(file, statusEl) {
