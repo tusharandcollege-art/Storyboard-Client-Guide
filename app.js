@@ -89,8 +89,9 @@ if (globalNotesBox) {
 // =============================================================
 // 2. PANEL COMMENTS SYSTEM
 // =============================================================
-document.querySelectorAll('.scene-card').forEach((card, index) => {
-    const sceneId = `scene_${index + 1}`;
+document.querySelectorAll('.scene-card').forEach((card) => {
+    // Use stable data-scene-id attribute; fall back to index only if missing
+    const sceneId = card.getAttribute('data-scene-id') || `scene_fallback_${Math.random().toString(36).slice(2)}`;
 
     const commentsDiv = document.createElement('div');
     commentsDiv.style.cssText = `
